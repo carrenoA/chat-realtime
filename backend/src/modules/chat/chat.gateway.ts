@@ -8,18 +8,21 @@ import {
   ConnectedSocket,
 } from '@nestjs/websockets';
 import { Socket, Server } from 'socket.io';
+import { ChatService } from './chat.service';
 
 interface User {
   socketId: string;
   nick: string;
 }
 
-@WebSocketGateway({ cors: true }) // Permitir CORS para desarrollo local
+@WebSocketGateway({ cors: true })
 export class ChatGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
   private server: Server;
   private connectedUsers: User[] = [];
+
+  constructor(private readonly chatService: ChatService) {}
 
   afterInit(server: Server) {
     this.server = server;
@@ -28,7 +31,6 @@ export class ChatGateway
 
   handleConnection(client: Socket) {
     console.log(`Cliente conectado: ${client.id}`);
-    // Aquí no agregamos a connectedUsers aún porque esperamos nick desde cliente
   }
 
   handleDisconnect(client: Socket) {
@@ -55,7 +57,7 @@ export class ChatGateway
   }
 
   @SubscribeMessage('sendMessage')
-  handleSendMessage(
+  async handleSendMessage(
     @MessageBody() payload: { to: string; message: string },
     @ConnectedSocket() client: Socket,
   ) {
@@ -70,6 +72,13 @@ export class ChatGateway
       return;
     }
 
+    // Guardar el mensaje en la base de datos
+    await this.chatService.saveMessage(
+      fromUser.nick,
+      toUser.nick,
+      payload.message,
+    );
+
     // Emitir mensaje al usuario destino
     this.server.to(toUser.socketId).emit('receiveMessage', {
       from: fromUser.nick,
@@ -83,6 +92,24 @@ export class ChatGateway
       message: payload.message,
       timestamp: new Date(),
     });
+  }
+
+  @SubscribeMessage('getMessages')
+  async handleGetMessages(
+    @MessageBody() payload: { withUser: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const fromUser = this.connectedUsers.find(
+      (user) => user.socketId === client.id,
+    );
+    if (!fromUser) return;
+
+    const messages = await this.chatService.getMessagesBetweenUsers(
+      fromUser.nick,
+      payload.withUser,
+    );
+
+    client.emit('messagesHistory', messages);
   }
 
   private emitUsersList() {

@@ -11,11 +11,25 @@ export class ChatService {
     @InjectModel(User.name) private userModel: Model<UserDocument>,
   ) {}
 
+  // Mensajes
   async saveMessage(from: string, to: string, message: string) {
     const createdMessage = new this.messageModel({ from, to, message });
     return createdMessage.save();
   }
 
+  async getMessagesBetweenUsers(user1: string, user2: string) {
+    return this.messageModel
+      .find({
+        $or: [
+          { from: user1, to: user2 },
+          { from: user2, to: user1 },
+        ],
+      })
+      .sort({ createdAt: 1 })
+      .exec();
+  }
+
+  // Usuarios
   async addUser(nick: string, socketId: string) {
     return this.userModel.create({ nick, socketId });
   }
