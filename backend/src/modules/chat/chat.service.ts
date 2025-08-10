@@ -11,14 +11,13 @@ export class ChatService {
     @InjectModel(User.name) private userModel: Model<UserDocument>,
   ) {}
 
-  // Mensajes
   async saveMessage(from: string, to: string, message: string) {
     const createdMessage = new this.messageModel({ from, to, message });
     return createdMessage.save();
   }
 
   async getMessagesBetweenUsers(user1: string, user2: string) {
-    return this.messageModel
+    const messages = await this.messageModel
       .find({
         $or: [
           { from: user1, to: user2 },
@@ -27,10 +26,45 @@ export class ChatService {
       })
       .sort({ createdAt: 1 })
       .exec();
+
+    // Mapeo explícito para enviar timestamp con el nombre que espera el frontend
+    return messages.map((msg) => ({
+      from: msg.from,
+      to: msg.to,
+      message: msg.message,
+      timestamp: msg.createdAt,
+    }));
   }
 
-  // Usuarios
+  async getAllConversationsForUser(nick: string) {
+    const messages = await this.messageModel
+      .find({
+        $or: [{ from: nick }, { to: nick }],
+      })
+      .sort({ createdAt: 1 })
+      .exec();
+
+    const conversations = new Map<string, MessageDocument[]>();
+
+    messages.forEach((msg) => {
+      const otherUser = msg.from === nick ? msg.to : msg.from;
+      if (!conversations.has(otherUser)) {
+        conversations.set(otherUser, []);
+      }
+      const userMessages = conversations.get(otherUser);
+      if (userMessages) {
+        userMessages.push(msg);
+      }
+    });
+
+    return Array.from(conversations.entries()).map(([user, messages]) => ({
+      user,
+      messages,
+    }));
+  }
+
   async addUser(nick: string, socketId: string) {
+    await this.userModel.deleteOne({ nick }).exec();
     return this.userModel.create({ nick, socketId });
   }
 

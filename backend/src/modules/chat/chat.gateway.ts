@@ -9,6 +9,7 @@ import {
 } from '@nestjs/websockets';
 import { Socket, Server } from 'socket.io';
 import { ChatService } from './chat.service';
+import { MessageDocument } from './schemas/message.schema';
 
 interface User {
   socketId: string;
@@ -40,16 +41,17 @@ export class ChatGateway
     console.log(`Cliente conectado: ${client.id}`);
   }
 
-  handleDisconnect(client: Socket) {
+  async handleDisconnect(client: Socket) {
     console.log(`Cliente desconectado: ${client.id}`);
     this.connectedUsers = this.connectedUsers.filter(
       (user) => user.socketId !== client.id,
     );
+    await this.chatService.removeUser(client.id);
     this.emitUsersList();
   }
 
   @SubscribeMessage('setNick')
-  handleSetNick(
+  async handleSetNick(
     @MessageBody() nick: string,
     @ConnectedSocket() client: Socket,
   ) {
@@ -59,6 +61,7 @@ export class ChatGateway
       return;
     }
     this.connectedUsers.push({ socketId: client.id, nick });
+    await this.chatService.addUser(nick, client.id);
     client.emit('nickSet', nick);
     this.emitUsersList();
   }
@@ -79,25 +82,22 @@ export class ChatGateway
       return;
     }
 
-    // Guardar el mensaje en la base de datos
-    await this.chatService.saveMessage(
+    const savedMessage = (await this.chatService.saveMessage(
       fromUser.nick,
       toUser.nick,
       payload.message,
-    );
+    )) as MessageDocument;
 
-    // Emitir mensaje al usuario destino
     this.server.to(toUser.socketId).emit('receiveMessage', {
       from: fromUser.nick,
       message: payload.message,
-      timestamp: new Date(),
+      timestamp: savedMessage.createdAt,
     });
 
-    // Emitir mensaje al emisor para actualizar su chat
     client.emit('messageSent', {
       to: toUser.nick,
       message: payload.message,
-      timestamp: new Date(),
+      timestamp: savedMessage.createdAt,
     });
   }
 
@@ -117,6 +117,20 @@ export class ChatGateway
     );
 
     client.emit('messagesHistory', messages);
+  }
+
+  @SubscribeMessage('getAllConversations')
+  async handleGetAllConversations(@ConnectedSocket() client: Socket) {
+    const fromUser = this.connectedUsers.find(
+      (user) => user.socketId === client.id,
+    );
+    if (!fromUser) return;
+
+    const conversations = await this.chatService.getAllConversationsForUser(
+      fromUser.nick,
+    );
+
+    client.emit('allConversations', conversations);
   }
 
   private emitUsersList() {
