@@ -14,7 +14,7 @@ export default function UserList({ users, selectedUser, onSelectUser }: UserList
     function onResize() {
       const mobile = window.innerWidth < 768;
       setIsMobile(mobile);
-      if (!mobile) setShowUsers(true); 
+      if (!mobile) setShowUsers(true);
       else setShowUsers(false);
     }
     window.addEventListener('resize', onResize);
