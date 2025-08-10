@@ -1,6 +1,13 @@
+export interface FileData {
+  type: string;
+  url: string;
+}
+
 export interface Message {
-  from?: string;
+  from: string;
   to?: string;
   message: string;
-  timestamp?: string | Date;
+  timestamp?: number;
+  files?: FileData[];
+  audioUrl?: string;
 }

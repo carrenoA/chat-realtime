@@ -12,7 +12,16 @@ export default function NickInput({ onSetNick }: NickInputProps) {
   };
 
   return (
-    <div>
+    <div
+      style={{
+        height: '100vh',        
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center', 
+        alignItems: 'center',    
+        gap: '12px',
+      }}
+    >
       <h3>Ingresa tu nick</h3>
       <input value={nick} onChange={e => setNick(e.target.value)} />
       <button onClick={handleSubmit}>Entrar</button>

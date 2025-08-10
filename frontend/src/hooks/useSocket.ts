@@ -7,18 +7,25 @@ const socket = io("http://localhost:3000", { transports: ["websocket"] });
 export function useSocket(nick: string | null) {
   const [users, setUsers] = useState<string[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [selectedUser, setSelectedUser] = useState<string>('');
 
   useEffect(() => {
     socket.on('usersList', (usersList: string[]) => {
       setUsers(usersList.filter(u => u !== nick));
     });
 
+    setMessages([]);
+
     socket.on('receiveMessage', (msg: Message) => {
-      setMessages(prev => [...prev, msg]);
+      if (msg.from === selectedUser || msg.to === selectedUser) {
+        setMessages(prev => [...prev, msg]);
+      }
     });
 
     socket.on('messageSent', (msg: Message) => {
-      setMessages(prev => [...prev, msg]);
+      if (msg.from === nick && msg.to === selectedUser) {
+        setMessages(prev => [...prev, msg]);
+      }
     });
 
     socket.on('messagesHistory', (msgs: Message[]) => {
@@ -31,7 +38,21 @@ export function useSocket(nick: string | null) {
       socket.off('messageSent');
       socket.off('messagesHistory');
     };
-  }, [nick]);
+  }, [nick, selectedUser]);
 
-  return { socket, users, messages, setMessages };
+  const sendMessage = (messageText: string) => {
+    if (!nick || !selectedUser) return;
+
+    const newMessage: Message = {
+      from: nick,
+      to: selectedUser,
+      message: messageText,
+      timestamp: Date.now(), 
+    };
+
+    setMessages(prev => [...prev, newMessage]);
+    socket.emit('sendMessage', { to: selectedUser, message: messageText });
+  };
+
+  return { socket, users, messages, selectedUser, setSelectedUser, sendMessage };
 }

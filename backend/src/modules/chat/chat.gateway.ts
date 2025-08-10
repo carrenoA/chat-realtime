@@ -134,7 +134,11 @@ export class ChatGateway
   }
 
   private emitUsersList() {
-    const nicks = this.connectedUsers.map((user) => user.nick);
-    this.server.emit('usersList', nicks);
+    this.connectedUsers.forEach((user) => {
+      const filteredNicks = this.connectedUsers
+        .filter((u) => u.nick !== user.nick)
+        .map((u) => u.nick);
+      this.server.to(user.socketId).emit('usersList', filteredNicks);
+    });
   }
 }

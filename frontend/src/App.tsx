@@ -8,10 +8,27 @@ import { useSocket } from './hooks/useSocket';
 function App() {
   const [nick, setNick] = useState<string | null>(null);
   const [nickSet, setNickSet] = useState(false);
-  const [selectedUser, setSelectedUser] = useState('');
-  const { socket, users, messages } = useSocket(nick);
+  const { socket, users, messages, selectedUser, setSelectedUser, sendMessage } = useSocket(nick);
 
-  // Set nick on server
+ 
+  const [isMobile, setIsMobile] = useState<boolean>(false);
+
+  useEffect(() => {
+    setIsMobile(window.innerWidth < 768);
+    function onResize() {
+      setIsMobile(window.innerWidth < 768);
+    }
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  
+  const [showUsers, setShowUsers] = useState<boolean>(true);
+
+  useEffect(() => {
+    setShowUsers(!isMobile);
+  }, [isMobile]);
+
   const handleSetNick = (nickValue: string) => {
     socket.emit('setNick', nickValue);
   };
@@ -20,7 +37,6 @@ function App() {
     socket.on('nickSet', (assignedNick: string) => {
       setNick(assignedNick);
       setNickSet(true);
-      console.log(`Nick asignado: ${assignedNick}`);
     });
 
     socket.on('nickError', (msg: string) => {
@@ -35,37 +51,120 @@ function App() {
     };
   }, [socket]);
 
-  // When selectedUser changes, request messages history
   useEffect(() => {
     if (selectedUser && nick) {
       socket.emit('getMessages', { withUser: selectedUser });
     }
   }, [selectedUser, nick, socket]);
 
-  // Send message
   const handleSendMessage = (msg: string) => {
-    if (selectedUser && msg) {
-      console.log(`Enviando mensaje a ${selectedUser}: ${msg}`);
-      socket.emit('sendMessage', { to: selectedUser, message: msg });
-    }
+    sendMessage(msg);
   };
 
   return (
-    <div style={{ display: 'flex', height: '100vh', fontFamily: 'sans-serif' }}>
-      <div style={{ width: 200, borderRight: '1px solid #ccc', padding: 10 }}>
-        {!nickSet ? (
-          <NickInput onSetNick={handleSetNick} />
-        ) : (
-          <UserList users={users} selectedUser={selectedUser} onSelectUser={setSelectedUser} />
-        )}
+  <div
+    style={{
+      display: 'flex',
+      justifyContent: 'center', 
+      alignItems: 'center',     
+      width: '100vw',
+      height: '100vh',
+      fontFamily: 'sans-serif',
+      backgroundColor: '#fff',
+    }}
+  >
+    {!nickSet ? (
+     
+      <div style={{ width: '100%', maxWidth: 400, padding: 20 }}>
+        <NickInput onSetNick={handleSetNick} />
       </div>
+    ) : (
+      
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'row',
+          height: '100vh',
+          width: '100vw',
+          overflow: 'hidden',
+        }}
+      >
+        
+        {(!isMobile || showUsers) && (
+          <div
+            style={{
+              flexBasis: isMobile ? '100%' : '20%',
+              flexShrink: 0,
+              borderRight: isMobile ? 'none' : '1px solid #ccc',
+              padding: 10,
+              boxSizing: 'border-box',
+              height: '100vh',
+              overflowY: 'auto',
+              backgroundColor: '#f9f9f9',
+            }}
+          >
+            {isMobile && nickSet && (
+              <button
+                onClick={() => setShowUsers(false)}
+                style={{
+                  marginBottom: 10,
+                  padding: '6px 12px',
+                  borderRadius: 6,
+                  border: '1px solid #ccc',
+                  backgroundColor: '#eee',
+                  cursor: 'pointer',
+                }}
+                aria-label="Cerrar lista de usuarios"
+              >
+                ← Usuarios
+              </button>
+            )}
 
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        <ChatWindow messages={messages} />
-        {nickSet && selectedUser && <MessageInput onSendMessage={handleSendMessage} />}
+            <UserList users={users} selectedUser={selectedUser} onSelectUser={setSelectedUser} />
+          </div>
+        )}
+
+        {/* Chat */}
+        <div
+          style={{
+            flexGrow: 1,
+            flexBasis: isMobile ? (showUsers ? '0%' : '100%') : '80%',
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100vh',
+            boxSizing: 'border-box',
+            overflow: 'hidden',
+            position: 'relative',
+          }}
+        >
+          {isMobile && nickSet && !showUsers && (
+            <button
+              onClick={() => setShowUsers(true)}
+              style={{
+                position: 'absolute',
+                top: 10,
+                left: 10,
+                zIndex: 10,
+                padding: '6px 12px',
+                borderRadius: 6,
+                border: '1px solid #ccc',
+                backgroundColor: '#eee',
+                cursor: 'pointer',
+              }}
+              aria-label="Mostrar lista de usuarios"
+            >
+              Usuarios →
+            </button>
+          )}
+
+          <ChatWindow messages={messages} currentNick={nick} />
+          {nickSet && selectedUser && <MessageInput onSendMessage={handleSendMessage} />}
+        </div>
       </div>
-    </div>
-  );
+    )}
+  </div>
+);
+
 }
 
 export default App;
