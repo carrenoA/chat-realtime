@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import {
   WebSocketGateway,
   SubscribeMessage,
@@ -9,12 +10,9 @@ import {
 } from '@nestjs/websockets';
 import { Socket, Server } from 'socket.io';
 import { ChatService } from './chat.service';
-import { MessageDocument } from './schemas/message.schema';
-
-interface User {
-  socketId: string;
-  nick: string;
-}
+import { sendMessageDto } from './dto/send-message.dto';
+import { SetNickDto } from './dto/set-nick.dto';
+import { GetMessagesHistoryDto } from './dto/get-messages-history.dto';
 
 @WebSocketGateway({
   cors: {
@@ -24,11 +22,8 @@ interface User {
   },
   transports: ['websocket'],
 })
-export class ChatGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
-{
+export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   private server: Server;
-  private connectedUsers: User[] = [];
 
   constructor(private readonly chatService: ChatService) {}
 
@@ -43,52 +38,38 @@ export class ChatGateway
 
   async handleDisconnect(client: Socket) {
     console.log(`Cliente desconectado: ${client.id}`);
-    this.connectedUsers = this.connectedUsers.filter(
-      (user) => user.socketId !== client.id,
-    );
     await this.chatService.removeUser(client.id);
     this.emitUsersList();
   }
 
   @SubscribeMessage('setNick')
-  async handleSetNick(
-    @MessageBody() nick: string,
-    @ConnectedSocket() client: Socket,
-  ) {
-    const existingUser = this.connectedUsers.find((user) => user.nick === nick);
+  async handleSetNick(@MessageBody() payload: SetNickDto, @ConnectedSocket() client: Socket) {
+    const { nick } = payload;
+    const existingUser = this.chatService.findUserByNick(nick);
     if (existingUser) {
       client.emit('nickError', 'El nick ya está en uso.');
       return;
     }
-    this.connectedUsers.push({ socketId: client.id, nick });
     await this.chatService.addUser(nick, client.id);
     client.emit('nickSet', nick);
     this.emitUsersList();
   }
 
   @SubscribeMessage('sendMessage')
-  async handleSendMessage(
-    @MessageBody() payload: { to: string; message: string },
-    @ConnectedSocket() client: Socket,
-  ) {
-    const fromUser = this.connectedUsers.find(
-      (user) => user.socketId === client.id,
-    );
+  async handleSendMessage(@MessageBody() payload: sendMessageDto, @ConnectedSocket() client: Socket) {
+    const fromUser = this.chatService.findUserBySocketId(client.id);
     if (!fromUser) return;
 
-    const toUser = this.connectedUsers.find((user) => user.nick === payload.to);
+    const toUser = this.chatService.findUserByNick(payload.to);
     if (!toUser) {
       client.emit('errorMessage', 'Usuario destino no conectado.');
       return;
     }
 
-    const savedMessage = (await this.chatService.saveMessage(
-      fromUser.nick,
-      toUser.nick,
-      payload.message,
-    )) as MessageDocument;
+    const savedMessage = await this.chatService.saveMessage(fromUser.nick, toUser.nick, payload.message);
 
     this.server.to(toUser.socketId).emit('receiveMessage', {
+      id: savedMessage._id.toString(),
       from: fromUser.nick,
       message: payload.message,
       timestamp: savedMessage.createdAt,
@@ -102,43 +83,32 @@ export class ChatGateway
   }
 
   @SubscribeMessage('getMessages')
-  async handleGetMessages(
-    @MessageBody() payload: { withUser: string },
-    @ConnectedSocket() client: Socket,
-  ) {
-    const fromUser = this.connectedUsers.find(
-      (user) => user.socketId === client.id,
-    );
+  async handleGetMessages(@MessageBody() payload: GetMessagesHistoryDto, @ConnectedSocket() client: Socket) {
+    const fromUser = this.chatService.findUserBySocketId(client.id);
     if (!fromUser) return;
 
-    const messages = await this.chatService.getMessagesBetweenUsers(
-      fromUser.nick,
-      payload.withUser,
-    );
-
+    const messages = await this.chatService.getMessagesBetweenUsers(fromUser.nick, payload.withUser);
     client.emit('messagesHistory', messages);
   }
 
   @SubscribeMessage('getAllConversations')
   async handleGetAllConversations(@ConnectedSocket() client: Socket) {
-    const fromUser = this.connectedUsers.find(
-      (user) => user.socketId === client.id,
-    );
+    const fromUser = this.chatService.findUserBySocketId(client.id);
     if (!fromUser) return;
 
-    const conversations = await this.chatService.getAllConversationsForUser(
-      fromUser.nick,
-    );
-
+    const conversations = await this.chatService.getAllConversationsForUser(fromUser.nick);
     client.emit('allConversations', conversations);
   }
 
   private emitUsersList() {
-    this.connectedUsers.forEach((user) => {
-      const filteredNicks = this.connectedUsers
-        .filter((u) => u.nick !== user.nick)
-        .map((u) => u.nick);
-      this.server.to(user.socketId).emit('usersList', filteredNicks);
-    });
+    const allNicks = this.chatService.getAllUsers();
+
+    for (const nick of allNicks) {
+      const user = this.chatService.findUserByNick(nick);
+      if (!user) continue;
+
+      const otherNicks = allNicks.filter(n => n !== nick);
+      this.server.to(user.socketId).emit('usersList', otherNicks);
+    }
   }
 }

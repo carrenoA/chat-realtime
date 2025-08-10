@@ -22,7 +22,16 @@ export default function UserList({ users, selectedUser, onSelectUser }: UserList
   }, []);
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <div
+      style={{
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        backgroundColor: 'var(--bg-sidebar)',
+        padding: '8px',
+        borderRight: '1px solid #ccc',
+      }}
+    >
       {isMobile && (
         <button
           onClick={() => setShowUsers(!showUsers)}
@@ -32,7 +41,8 @@ export default function UserList({ users, selectedUser, onSelectUser }: UserList
             fontWeight: '600',
             borderRadius: 6,
             border: '1px solid #ccc',
-            backgroundColor: '#f0f0f0',
+            backgroundColor: 'var(--bg-button)',
+            color: 'var(--text-button)',
             cursor: 'pointer',
             userSelect: 'none',
           }}
@@ -46,7 +56,7 @@ export default function UserList({ users, selectedUser, onSelectUser }: UserList
       {showUsers && (
         <>
           {!isMobile && (
-            <h3 style={{ marginBottom: 12, borderBottom: '1px solid #ccc', paddingBottom: 8 }}>
+            <h3 style={{ marginBottom: 12, borderBottom: '1px solid #ccc', paddingBottom: 8, color: 'var(--text-color)' }}>
               Online
             </h3>
           )}
@@ -67,7 +77,7 @@ export default function UserList({ users, selectedUser, onSelectUser }: UserList
                 key={user}
                 style={{
                   cursor: 'pointer',
-                  color: selectedUser === user ? 'blue' : 'black',
+                  color: selectedUser === user ? 'blue' : 'var(--text-color)',
                   padding: '8px 12px',
                   backgroundColor: selectedUser === user ? '#e6f0ff' : 'transparent',
                   borderRadius: 6,
@@ -77,7 +87,7 @@ export default function UserList({ users, selectedUser, onSelectUser }: UserList
                 }}
                 onClick={() => onSelectUser(user)}
                 onMouseEnter={e =>
-                  (e.currentTarget.style.backgroundColor = selectedUser === user ? '#e6f0ff' : '#f0f0f0')
+                  (e.currentTarget.style.backgroundColor = selectedUser === user ? '#e6f0ff' : 'var(--bg-button)')
                 }
                 onMouseLeave={e =>
                   (e.currentTarget.style.backgroundColor = selectedUser === user ? '#e6f0ff' : 'transparent')

@@ -5,6 +5,7 @@ import ChatWindow from "./components/ChatWindow";
 import MessageInput from "./components/MessageInput";
 import { useSocket } from "./hooks/useSocket";
 import { Toast } from "./components/Toast";
+import { useTheme } from "./theme/useTheme";
 
 type ToastMessage = {
   text: string;
@@ -12,6 +13,8 @@ type ToastMessage = {
 } | null;
 
 function App() {
+  const { theme, toggleTheme } = useTheme();
+
   const [nick, setNick] = useState<string | null>(null);
   const [nickSet, setNickSet] = useState(false);
   const {
@@ -65,10 +68,13 @@ function App() {
       }
     });
 
+    // 
+
     return () => {
       socket.off("nickSet");
       socket.off("nickError");
       socket.off("receiveMessage");
+      socket.off("updateReactions");
     };
   }, [socket, nick]);
 
@@ -90,6 +96,7 @@ function App() {
     }
   };
 
+
   return (
     <div
       style={{
@@ -99,10 +106,30 @@ function App() {
         width: "100vw",
         height: "100vh",
         fontFamily: "sans-serif",
-        backgroundColor: "#fff",
+        backgroundColor: "var(--bg-color)",
+        color: "var(--text-color)",
         position: "relative",
       }}
     >
+      <button
+        onClick={toggleTheme}
+        style={{
+          position: "absolute",
+          top: 10,
+          right: 10,
+          zIndex: 1000,
+          padding: "8px 12px",
+          borderRadius: 6,
+          backgroundColor: "var(--button-bg)",
+          border: `1px solid var(--button-border)`,
+          cursor: "pointer",
+          color: "var(--text-color)",
+        }}
+        aria-label="Toggle Dark Mode"
+      >
+        {theme === "light" ? "Modo Oscuro" : "Modo Claro"}
+      </button>
+
       {!nickSet ? (
         <div style={{ width: "100%", maxWidth: 400, padding: 20 }}>
           <NickInput onSetNick={handleSetNick} />
@@ -127,7 +154,7 @@ function App() {
                 boxSizing: "border-box",
                 height: "100vh",
                 overflowY: "auto",
-                backgroundColor: "#f9f9f9",
+                backgroundColor: "var(--secondary-bg)",
               }}
             >
               {isMobile && nickSet && (
@@ -138,8 +165,9 @@ function App() {
                     padding: "6px 12px",
                     borderRadius: 6,
                     border: "1px solid #ccc",
-                    backgroundColor: "#eee",
+                    backgroundColor: "var(--button-bg)",
                     cursor: "pointer",
+                    color: "var(--text-color)",
                   }}
                   aria-label="Cerrar lista de usuarios"
                 >
@@ -155,7 +183,6 @@ function App() {
             </div>
           )}
 
-          {/* Chat */}
           <div
             style={{
               flexGrow: 1,
@@ -179,8 +206,9 @@ function App() {
                   padding: "6px 12px",
                   borderRadius: 6,
                   border: "1px solid #ccc",
-                  backgroundColor: "#eee",
+                  backgroundColor: "var(--button-bg)",
                   cursor: "pointer",
+                  color: "var(--text-color)",
                 }}
                 aria-label="Mostrar lista de usuarios"
               >
@@ -188,7 +216,10 @@ function App() {
               </button>
             )}
 
-            <ChatWindow messages={messages} currentNick={nick} />
+            <ChatWindow
+              messages={messages}
+              currentNick={nick}
+            />
             {nickSet && selectedUser && (
               <MessageInput onSendMessage={handleSendMessage} />
             )}
@@ -200,7 +231,7 @@ function App() {
         <Toast
           message={toastMessage}
           onClose={() => setToastMessage(null)}
-          duration={3000} 
+          duration={3000}
           onClick={handleNotificationClick}
         />
       )}

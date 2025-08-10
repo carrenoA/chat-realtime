@@ -1,86 +1,44 @@
+/* eslint-disable prettier/prettier */
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { Message, MessageDocument } from './schemas/message.schema';
-import { User, UserDocument } from './schemas/user.schema';
+import { UsersService } from '../users/users.service';
+import { MessagesService } from './messages.service';
 
 @Injectable()
 export class ChatService {
   constructor(
-    @InjectModel(Message.name) private messageModel: Model<MessageDocument>,
-    @InjectModel(User.name) private userModel: Model<UserDocument>,
+    private readonly usersService: UsersService,
+    private readonly messagesService: MessagesService,
   ) {}
 
-  async saveMessage(from: string, to: string, message: string) {
-    const createdMessage = new this.messageModel({ from, to, message });
-    return createdMessage.save();
+  addUser(nick: string, socketId: string) {
+    return this.usersService.addUser(nick, socketId);
   }
 
-  async getMessagesBetweenUsers(user1: string, user2: string) {
-    const messages = await this.messageModel
-      .find({
-        $or: [
-          { from: user1, to: user2 },
-          { from: user2, to: user1 },
-        ],
-      })
-      .sort({ createdAt: 1 })
-      .exec();
-
-    // Mapeo explícito para enviar timestamp con el nombre que espera el frontend
-    return messages.map((msg) => ({
-      from: msg.from,
-      to: msg.to,
-      message: msg.message,
-      timestamp: msg.createdAt,
-    }));
+  removeUser(socketId: string) {
+    return this.usersService.removeUser(socketId);
   }
 
-  async getAllConversationsForUser(nick: string) {
-    const messages = await this.messageModel
-      .find({
-        $or: [{ from: nick }, { to: nick }],
-      })
-      .sort({ createdAt: 1 })
-      .exec();
-
-    const conversations = new Map<string, MessageDocument[]>();
-
-    messages.forEach((msg) => {
-      const otherUser = msg.from === nick ? msg.to : msg.from;
-      if (!conversations.has(otherUser)) {
-        conversations.set(otherUser, []);
-      }
-      const userMessages = conversations.get(otherUser);
-      if (userMessages) {
-        userMessages.push(msg);
-      }
-    });
-
-    return Array.from(conversations.entries()).map(([user, messages]) => ({
-      user,
-      messages,
-    }));
+  findUserByNick(nick: string) {
+    return this.usersService.findByNick(nick);
   }
 
-  async addUser(nick: string, socketId: string) {
-    await this.userModel.deleteOne({ nick }).exec();
-    return this.userModel.create({ nick, socketId });
+  findUserBySocketId(socketId: string) {
+    return this.usersService.findBySocketId(socketId);
   }
 
-  async removeUser(socketId: string) {
-    return this.userModel.deleteOne({ socketId }).exec();
+  getAllUsers() {
+    return this.usersService.getAllUsers();
   }
 
-  async findUserByNick(nick: string) {
-    return this.userModel.findOne({ nick }).exec();
+  saveMessage(from: string, to: string, message: string) {
+    return this.messagesService.saveMessage(from, to, message);
   }
 
-  async findUserBySocketId(socketId: string) {
-    return this.userModel.findOne({ socketId }).exec();
+  getMessagesBetweenUsers(user1: string, user2: string) {
+    return this.messagesService.getMessagesBetweenUsers(user1, user2);
   }
 
-  async getAllUsers() {
-    return this.userModel.find().exec();
+  getAllConversationsForUser(nick: string) {
+    return this.messagesService.getAllConversationsForUser(nick);
   }
 }
