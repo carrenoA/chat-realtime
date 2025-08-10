@@ -1,10 +1,21 @@
 :root {
-  --bg-color: #e5ddd5;
-  --secondary-bg: #f9f9f9;
-  --text-color: #303030;
-  --button-bg: #f0f0f0;
+  --bg-color: #f0f2f5;             /* Fondo claro suave */
+  --secondary-bg: #ffffff;         /* Paneles blancos puros */
+  --text-color: #222222;           /* Texto negro suave */
+  --button-bg: #4a90e2;            /* Azul tech vibrante */
+  --button-hover-bg: #357ABD;      /* Azul hover */
   --button-border: transparent;
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  --bg-msg-mine: #d0ebff;          /* Azul claro para mensajes propios */
+  --bg-msg-other: #e9eff5;         /* Gris azulado para otros */
+  --text-msg-mine: #0b3d91;        /* Azul oscuro texto propio */
+  --text-msg-other: #3a3a3a;       /* Gris oscuro texto ajeno */
+  --shadow-primary: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --shadow-secondary: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --border-radius: 12px;
+  --transition: all 0.3s ease;
+  --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  
+  /* Fuentes y mejoras de rendering */
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -19,4 +30,5 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
+  font-family: var(--font-family);
 }

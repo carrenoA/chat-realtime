@@ -25,7 +25,7 @@ import { GetMessagesHistoryDto } from './dto/get-messages-history.dto';
 export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   private server: Server;
 
-  constructor(private readonly chatService: ChatService) {}
+  constructor(private readonly chatService: ChatService) { }
 
   afterInit(server: Server) {
     this.server = server;
@@ -45,6 +45,12 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   @SubscribeMessage('setNick')
   async handleSetNick(@MessageBody() payload: SetNickDto, @ConnectedSocket() client: Socket) {
     const { nick } = payload;
+
+    if (!nick || nick.trim() === '') {
+      client.emit('nickError', 'El nick no puede estar vacío');
+      return;
+    }
+
     const existingUser = this.chatService.findUserByNick(nick);
     if (existingUser) {
       client.emit('nickError', 'El nick ya está en uso.');
@@ -54,6 +60,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     client.emit('nickSet', nick);
     this.emitUsersList();
   }
+
 
   @SubscribeMessage('sendMessage')
   async handleSendMessage(@MessageBody() payload: sendMessageDto, @ConnectedSocket() client: Socket) {

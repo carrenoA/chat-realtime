@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { io } from 'socket.io-client';
-import type { Message } from '../types';
-import { normalizeMessage } from '../types';
+import type { Message } from '../types/types';
+import { normalizeMessage } from '../types/types';
 
 const socket = io("http://localhost:3000", { transports: ["websocket"] });
 

@@ -4,15 +4,10 @@ interface ToastProps {
   message: { text: string; fromUser: string } | null;
   onClick: () => void;
   onClose: () => void;
-  duration?: number; // Opcional, en ms
+  duration?: number;
 }
 
-export function Toast({
-  message,
-  onClick,
-  onClose,
-  duration = 3000,
-}: ToastProps) {
+export function Toast({ message, onClick, onClose, duration = 3000 }: ToastProps) {
   useEffect(() => {
     if (!message) return;
 
@@ -28,40 +23,58 @@ export function Toast({
   return (
     <div
       onClick={onClick}
+      role="alert"
+      aria-live="assertive"
+      aria-atomic="true"
+      tabIndex={0}
       style={{
         position: "fixed",
         top: 20,
         left: "50%",
         transform: "translateX(-50%)",
-        backgroundColor: "#222",
-        color: "#fff",
-        padding: "12px 20px",
-        borderRadius: 8,
+        backgroundColor: "var(--toast-bg, #333)",
+        color: "var(--toast-text, #fff)",
+        padding: "14px 24px",
+        borderRadius: 12,
+        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.25)",
         cursor: "pointer",
-        boxShadow: "0 2px 10px rgba(0,0,0,0.3)",
         userSelect: "none",
         zIndex: 9999,
         maxWidth: "90%",
-        textAlign: "center",
+        maxHeight: 80,
+        overflow: "hidden",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        fontWeight: 500,
+        fontSize: "1rem",
+        gap: 16,
       }}
-      role="alert"
-      aria-live="assertive"
     >
-      {message.text}
+      <span style={{ flex: 1, paddingRight: 12, whiteSpace: "nowrap", textOverflow: "ellipsis", overflow: "hidden" }}>
+        {message.text}
+      </span>
+
       <button
         onClick={(e) => {
           e.stopPropagation();
           onClose();
         }}
+        aria-label="Cerrar notificación"
         style={{
-          marginLeft: 12,
           background: "transparent",
           border: "none",
-          color: "#fff",
+          color: "inherit",
           fontWeight: "bold",
+          fontSize: "1.5rem",
+          lineHeight: 1,
           cursor: "pointer",
+          padding: 0,
+          userSelect: "none",
+          transition: "color 0.2s ease",
         }}
-        aria-label="Cerrar notificación"
+        onMouseEnter={(e) => (e.currentTarget.style.color = "#ff4d4f")}
+        onMouseLeave={(e) => (e.currentTarget.style.color = "inherit")}
       >
         ×
       </button>
