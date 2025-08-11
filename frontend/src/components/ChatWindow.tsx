@@ -8,6 +8,7 @@ interface ChatWindowProps {
 
 export default function ChatWindow({ messages, currentNick }: ChatWindowProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  
   const [expandedMessages, setExpandedMessages] = useState<Set<number>>(new Set());
 
   useEffect(() => {
@@ -15,7 +16,7 @@ export default function ChatWindow({ messages, currentNick }: ChatWindowProps) {
     containerRef.current.scrollTop = containerRef.current.scrollHeight;
   }, [messages]);
 
-  const MAX_CHARS = 750;
+  const MAX_CHARS = 750; 
 
   return (
     <div
@@ -39,6 +40,7 @@ export default function ChatWindow({ messages, currentNick }: ChatWindowProps) {
         const isExpanded = expandedMessages.has(idx);
         const messageTooLong = msg.message.length > MAX_CHARS;
 
+        // Texto a mostrar (recortado si es largo y no está expandido)
         const displayText =
           !isExpanded && messageTooLong
             ? msg.message.slice(0, MAX_CHARS) + "..."
@@ -67,6 +69,7 @@ export default function ChatWindow({ messages, currentNick }: ChatWindowProps) {
               cursor: messageTooLong && !isExpanded ? "pointer" : "default",
               userSelect: "text",
             }}
+            // Al hacer click en mensaje largo lo expande
             onClick={() => {
               if (messageTooLong && !isExpanded) {
                 setExpandedMessages((prev) => new Set(prev).add(idx));
@@ -102,6 +105,7 @@ export default function ChatWindow({ messages, currentNick }: ChatWindowProps) {
               </div>
             )}
 
+            {/* Fecha y hora del mensaje*/}
             {msg.timestamp && (
               <div
                 style={{

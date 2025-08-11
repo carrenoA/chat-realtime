@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 
 interface UserListProps {
-  users: string[];
-  selectedUser: string;
-  onSelectUser: (user: string) => void;
+  users: string[]; // usuarios online
+  selectedUser: string; 
+  onSelectUser: (user: string) => void; 
 }
 
 export default function UserList({ users, selectedUser, onSelectUser }: UserListProps) {
@@ -14,7 +14,7 @@ export default function UserList({ users, selectedUser, onSelectUser }: UserList
     const handleResize = () => {
       const mobile = window.innerWidth < 768;
       setIsMobile(mobile);
-      setShowUsers(!mobile);
+      setShowUsers(!mobile); 
     };
 
     window.addEventListener('resize', handleResize);
@@ -71,6 +71,8 @@ export default function UserList({ users, selectedUser, onSelectUser }: UserList
               Online
             </h3>
           )}
+
+          {/* Usuarios */}
           <ul
             id="user-list"
             role="list"
@@ -90,12 +92,12 @@ export default function UserList({ users, selectedUser, onSelectUser }: UserList
                 <li
                   key={user}
                   role="listitem"
-                  tabIndex={0}
-                  onClick={() => onSelectUser(user)}
+                  tabIndex={0} 
+                  onClick={() => onSelectUser(user)} 
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
-                      onSelectUser(user);
+                      onSelectUser(user); 
                     }
                   }}
                   style={{

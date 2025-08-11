@@ -1,11 +1,11 @@
 import { useState } from 'react';
 
 interface MessageInputProps {
-  onSendMessage: (msg: string) => void;
+  onSendMessage: (msg: string) => void; // Callback para enviar el mensaje
 }
 
 export default function MessageInput({ onSendMessage }: MessageInputProps) {
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState(''); 
 
   const handleSend = () => {
     if (message.trim()) {
@@ -40,11 +40,11 @@ export default function MessageInput({ onSendMessage }: MessageInputProps) {
         onKeyDown={e => {
           if (e.key === 'Enter') handleSend();
         }}
-        onFocus={e => (e.currentTarget.style.borderColor = '#007bff')}
-        onBlur={e => (e.currentTarget.style.borderColor = '#ccc')}
+        onFocus={e => (e.currentTarget.style.borderColor = '#007bff')} 
+        onBlur={e => (e.currentTarget.style.borderColor = '#ccc')} 
       />
       <button
-        onClick={handleSend}
+        onClick={handleSend} 
         style={{
           padding: '10px 20px',
           borderRadius: 20,
@@ -55,9 +55,9 @@ export default function MessageInput({ onSendMessage }: MessageInputProps) {
           cursor: 'pointer',
           transition: 'background-color 0.2s ease',
         }}
-        onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#0056b3')}
-        onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#007bff')}
-        disabled={!message.trim()}
+        onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#0056b3')} 
+        onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#007bff')} 
+        disabled={!message.trim()} 
       >
         Enviar
       </button>

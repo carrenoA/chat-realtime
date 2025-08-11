@@ -11,12 +11,15 @@ import { AppService } from './app.service';
       isGlobal: true,
       envFilePath: process.env.NODE_ENV === 'production' ? '.env' : '.env.local',
     }),
+
+    // Conecta con la base de datos MongoDB, usando la URL de configuración
     MongooseModule.forRoot(
       process.env.MONGO_URI ?? 'mongodb://localhost:27017/chat_db'
     ),
+
     ChatModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService],      
 })
 export class AppModule {}

@@ -1,13 +1,4 @@
-/* eslint-disable prettier/prettier */
-import {
-  WebSocketGateway,
-  SubscribeMessage,
-  OnGatewayInit,
-  OnGatewayConnection,
-  OnGatewayDisconnect,
-  MessageBody,
-  ConnectedSocket,
-} from '@nestjs/websockets';
+import {  WebSocketGateway,  SubscribeMessage,  OnGatewayInit,  OnGatewayConnection,  OnGatewayDisconnect,  MessageBody,  ConnectedSocket,} from '@nestjs/websockets';
 import { Socket, Server } from 'socket.io';
 import { ChatService } from './chat.service';
 import { sendMessageDto } from './dto/send-message.dto';
@@ -16,16 +7,16 @@ import { GetMessagesHistoryDto } from './dto/get-messages-history.dto';
 
 @WebSocketGateway({
   cors: {
-    origin: 'http://localhost:5173',
+    origin: 'http://localhost:5173', 
     methods: ['GET', 'POST'],
     credentials: true,
   },
-  transports: ['websocket'],
+  transports: ['websocket'], 
 })
 export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   private server: Server;
 
-  constructor(private readonly chatService: ChatService) { }
+  constructor(private readonly chatService: ChatService) {}
 
   afterInit(server: Server) {
     this.server = server;
@@ -50,17 +41,15 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       client.emit('nickError', 'El nick no puede estar vacío');
       return;
     }
-
-    const existingUser = this.chatService.findUserByNick(nick);
-    if (existingUser) {
+    if (this.chatService.findUserByNick(nick)) {
       client.emit('nickError', 'El nick ya está en uso.');
       return;
     }
+
     await this.chatService.addUser(nick, client.id);
     client.emit('nickSet', nick);
     this.emitUsersList();
   }
-
 
   @SubscribeMessage('sendMessage')
   async handleSendMessage(@MessageBody() payload: sendMessageDto, @ConnectedSocket() client: Socket) {
@@ -98,6 +87,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     client.emit('messagesHistory', messages);
   }
 
+  // Conversaciones Usuarios
   @SubscribeMessage('getAllConversations')
   async handleGetAllConversations(@ConnectedSocket() client: Socket) {
     const fromUser = this.chatService.findUserBySocketId(client.id);
@@ -107,6 +97,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     client.emit('allConversations', conversations);
   }
 
+  // Actualiza los usuarios conectados
   private emitUsersList() {
     const allNicks = this.chatService.getAllUsers();
 

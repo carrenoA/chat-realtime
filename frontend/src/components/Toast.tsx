@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 
 interface ToastProps {
-  message: { text: string; fromUser: string } | null;
-  onClick: () => void;
+  message: { text: string; fromUser: string } | null; 
+  onClick: () => void; 
   onClose: () => void;
   duration?: number;
 }
@@ -11,6 +11,7 @@ export function Toast({ message, onClick, onClose, duration = 3000 }: ToastProps
   useEffect(() => {
     if (!message) return;
 
+    // Timer para cerrar el toast automáticamente después de 'duration' ms
     const timer = setTimeout(() => {
       onClose();
     }, duration);
@@ -22,24 +23,24 @@ export function Toast({ message, onClick, onClose, duration = 3000 }: ToastProps
 
   return (
     <div
-      onClick={onClick}
-      role="alert"
-      aria-live="assertive"
-      aria-atomic="true"
-      tabIndex={0}
+      onClick={onClick} 
+      role="alert" 
+      aria-live="assertive" 
+      aria-atomic="true" 
+      tabIndex={0} 
       style={{
-        position: "fixed",
+        position: "fixed", // Siempre visible en la pantalla
         top: 20,
         left: "50%",
-        transform: "translateX(-50%)",
-        backgroundColor: "var(--toast-bg, #333)",
-        color: "var(--toast-text, #fff)",
+        transform: "translateX(-50%)", 
+        backgroundColor: "var(--toast-bg, #333)", 
+        color: "var(--toast-text, #fff)", 
         padding: "14px 24px",
         borderRadius: 12,
         boxShadow: "0 4px 12px rgba(0, 0, 0, 0.25)",
         cursor: "pointer",
         userSelect: "none",
-        zIndex: 9999,
+        zIndex: 9999, // Sobre todo lo demás
         maxWidth: "90%",
         maxHeight: 80,
         overflow: "hidden",
@@ -51,14 +52,15 @@ export function Toast({ message, onClick, onClose, duration = 3000 }: ToastProps
         gap: 16,
       }}
     >
+      {/* Texto del mensaje, con recorte si es muy largo */}
       <span style={{ flex: 1, paddingRight: 12, whiteSpace: "nowrap", textOverflow: "ellipsis", overflow: "hidden" }}>
         {message.text}
       </span>
 
       <button
         onClick={(e) => {
-          e.stopPropagation();
-          onClose();
+          e.stopPropagation(); 
+          onClose(); 
         }}
         aria-label="Cerrar notificación"
         style={{
@@ -74,7 +76,7 @@ export function Toast({ message, onClick, onClose, duration = 3000 }: ToastProps
           transition: "color 0.2s ease",
         }}
         onMouseEnter={(e) => (e.currentTarget.style.color = "#ff4d4f")}
-        onMouseLeave={(e) => (e.currentTarget.style.color = "inherit")}
+        onMouseLeave={(e) => (e.currentTarget.style.color = "inherit")} 
       >
         ×
       </button>

@@ -1,11 +1,11 @@
 import { useState } from 'react';
 
 interface NickInputProps {
-  onSetNick: (payload: { nick: string }) => void;
+  onSetNick: (payload: { nick: string }) => void; // Callback para enviar el nick al padre
 }
 
 export default function NickInput({ onSetNick }: NickInputProps) {
-  const [nick, setNick] = useState('');
+  const [nick, setNick] = useState(''); // Estado local para el nick
 
   const handleSubmit = () => {
     if (nick.trim()) onSetNick({ nick: nick.trim() });
@@ -17,7 +17,7 @@ export default function NickInput({ onSetNick }: NickInputProps) {
         height: '100vh',
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'center',
+        justifyContent: 'center', 
         alignItems: 'center',
         gap: 16,
         backgroundColor: 'var(--bg-color)',
@@ -36,10 +36,11 @@ export default function NickInput({ onSetNick }: NickInputProps) {
       >
         Ingresa tu nick
       </h3>
+
       <input
         type="text"
         value={nick}
-        onChange={(e) => setNick(e.target.value)}
+        onChange={(e) => setNick(e.target.value)} 
         placeholder="Tu nick aquí"
         style={{
           padding: '10px 14px',
@@ -52,12 +53,13 @@ export default function NickInput({ onSetNick }: NickInputProps) {
           backgroundColor: 'var(--secondary-bg)',
           color: 'var(--text-color)',
         }}
-        onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--button-bg)')}
-        onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--button-border)')}
+        onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--button-bg)')} 
+        onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--button-border)')} 
         onKeyDown={(e) => {
-          if (e.key === 'Enter') handleSubmit();
+          if (e.key === 'Enter') handleSubmit(); 
         }}
       />
+
       <button
         onClick={handleSubmit}
         style={{
@@ -67,14 +69,14 @@ export default function NickInput({ onSetNick }: NickInputProps) {
           backgroundColor: 'var(--button-bg)',
           color: 'white',
           fontWeight: '600',
-          cursor: nick.trim() ? 'pointer' : 'not-allowed',
+          cursor: nick.trim() ? 'pointer' : 'not-allowed', 
           fontSize: '1rem',
           transition: 'background-color 0.2s ease',
           userSelect: 'none',
-          opacity: nick.trim() ? 1 : 0.5,
+          opacity: nick.trim() ? 1 : 0.5, 
         }}
         onMouseEnter={(e) => {
-          if (nick.trim()) e.currentTarget.style.backgroundColor = 'var(--button-hover-bg)';
+          if (nick.trim()) e.currentTarget.style.backgroundColor = 'var(--button-hover-bg)'; 
         }}
         onMouseLeave={(e) => {
           if (nick.trim()) e.currentTarget.style.backgroundColor = 'var(--button-bg)';

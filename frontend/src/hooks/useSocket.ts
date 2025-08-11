@@ -11,64 +11,72 @@ export function useSocket(nick: string | null) {
   const [selectedUser, setSelectedUser] = useState<string>('');
   const selectedUserRef = useRef(selectedUser);
   selectedUserRef.current = selectedUser;
+
   const [toastMessage, setToastMessage] = useState<{ text: string; fromUser: string } | null>(null);
 
   useEffect(() => {
-    socket.on('usersList', (usersList: string[]) => {
+    const handleUsersList = (usersList: string[]) => {
       setUsers(usersList.filter(u => u !== nick));
-    });
+    };
 
-    if (!selectedUserRef.current) {
-      setMessages([]);
-    }
-
-    socket.on('receiveMessage', (msg: Message) => {
+    const handleReceiveMessage = (msg: Message) => {
       const safeMsg = normalizeMessage(msg);
-      if (selectedUserRef.current && (safeMsg.from === selectedUserRef.current || safeMsg.to === selectedUserRef.current)) {
+
+      if (selectedUserRef.current && 
+          (safeMsg.from === selectedUserRef.current || safeMsg.to === selectedUserRef.current)) {
         setMessages(prev => [...prev, safeMsg]);
       } else if (safeMsg.to === nick) {
         setToastMessage({ text: `NUEVO MENSAJE de ${safeMsg.from}`, fromUser: safeMsg.from });
       }
-    });
+    };
 
-    socket.on('messageSent', (msg: Message) => {
+    const handleMessageSent = (msg: Message) => {
       const safeMsg = normalizeMessage(msg);
       if (safeMsg.from === nick && safeMsg.to === selectedUserRef.current) {
         setMessages(prev => [...prev, safeMsg]);
       }
-    });
+    };
 
-    socket.on('messagesHistory', (msgs: Message[]) => {
+    // Carga el historial de mensajes cuando se selecciona usuario
+    const handleMessagesHistory = (msgs: Message[]) => {
       if (selectedUserRef.current) {
         const safeMsgs = msgs.map(normalizeMessage);
         setMessages(safeMsgs);
       }
-    });
+    };
+
+    socket.on('usersList', handleUsersList);
+    socket.on('receiveMessage', handleReceiveMessage);
+    socket.on('messageSent', handleMessageSent);
+    socket.on('messagesHistory', handleMessagesHistory);
 
     return () => {
-      socket.off('usersList');
-      socket.off('receiveMessage');
-      socket.off('messageSent');
-      socket.off('messagesHistory');
+      socket.off('usersList', handleUsersList);
+      socket.off('receiveMessage', handleReceiveMessage);
+      socket.off('messageSent', handleMessageSent);
+      socket.off('messagesHistory', handleMessagesHistory);
     };
   }, [nick]);
 
+  const handleSetSelectedUser = (user: string) => {
+    setSelectedUser(user);
+    setMessages([]); 
+    setToastMessage(null);
+    socket.emit('getMessages', { withUser: user });
+  };
+
   const sendMessage = (messageText: string) => {
     if (!nick || !selectedUserRef.current) return;
+
     const newMessage: Message = normalizeMessage({
       from: nick,
       to: selectedUserRef.current,
       message: messageText,
       timestamp: new Date().toISOString(),
     });
+
     setMessages(prev => [...prev, newMessage]);
     socket.emit('sendMessage', { to: selectedUserRef.current, message: messageText });
-  };
-
-  const handleSetSelectedUser = (user: string) => {
-    setSelectedUser(user);
-    setToastMessage(null);
-    socket.emit('getMessages', { withUser: user });
   };
 
   const handleNotificationClick = () => {
